@@ -1,6 +1,6 @@
 # SI 201 HW6 (APIs, JSON, and Caching)
-# Your name:
-# Your student id:
+# Your name: Elli
+# Your student id: 
 # Your email:
 # Who or what you worked with on this homework (including generative AI like ChatGPT):
 # If you worked with generative AI also add a statement for how you used it.
@@ -36,7 +36,13 @@ def load_json(filename):
         A dictionary with the JSON data, OR an empty dictionary {} if the file
         cannot be opened or is not valid JSON.
     """
-    pass
+    try:
+        # open file with utf-8 encoding and load JSON info
+        with open(filename, 'r', encoding="utf-8") as f: 
+            return json.load(f) # converts JSON to Python dict
+    except (json.JSONDecodeError, FileNotFoundError): 
+        #If an issue occurs return an empty dictionary
+            return {}
 
 
 def create_cache(dictionary, filename):
@@ -51,7 +57,11 @@ def create_cache(dictionary, filename):
     RETURNS:
         None
     """
-    pass
+
+    with open(filename, 'w', encoding='utf-8') as f:
+        json.dump(dictionary, f)
+    return None
+    
 
 
 def search_breed(breed_id):
@@ -68,8 +78,14 @@ def search_breed(breed_id):
         JSON body as a dict (with a top-level 'data' key on success), OR None if the
         request failed or the response does not represent a successful breed lookup.
     """
-    pass
-
+    try:
+        url_request = requests.get(f"https://dogapi.dog/api/v2/breeds/{breed_id}")
+        if url_request.status_code == 200:
+            return (url_request.json(), url_request.url)
+        else:
+            return None
+    except requests.RequestException:
+        return None
 
 def update_cache(breed_ids, cache_file):
     """
@@ -85,8 +101,21 @@ def update_cache(breed_ids, cache_file):
         A string: "Cached data for {percentage}% of breeds",
         where percentage = (successful_new_adds / len(breed_ids)) * 100.
     """
-    pass
-
+    cache = load_json(cache_file)
+    breed_count = 0
+    for breed_id in breed_ids:
+        url = f'https://dogapi.dog/api/v2/breeds/{breed_id}'
+        if url in cache:
+            continue
+        else:
+            result = search_breed(breed_id)
+            if result is not None:
+                cache[url] = result[0]
+                breed_count += 1
+    create_cache(cache, cache_file)
+    percentage = (breed_count / len(breed_ids)) * 100 if breed_ids else 0
+    percentage = round(percentage, 1)
+    return f"Cached data for {percentage}% of breeds"   
 
 def get_longest_lifespan_breed(cache_file):
     """
@@ -119,7 +148,7 @@ def get_groups_above_cutoff(cutoff, cache_file):
     RETURNS:
         A dictionary {group_uuid: count} for groups with count >= cutoff only.
     """
-    pass
+    cache = load_json(cache_file)
 
 
 # Extra Credit
